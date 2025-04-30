@@ -1,0 +1,138 @@
+const db = require('../utils/db');
+
+const getPedidos = async () => {
+    const [pedidos] = await db.query(
+        `SELECT 
+            p.id_pedido,
+            p.id_usuario,
+            CONCAT(u.nombre, ' ',u.apellido) as usuario,
+            p.total,
+            p.metodo_pago,
+            p.estado,
+            p.fecha
+        FROM pedidos p
+        INNER JOIN usuarios u ON u.id_usuario = p.id_usuario;`
+    )    
+    return pedidos
+};
+
+const getPedido = async (id) => {
+    try {
+        const [pedido] = await db.query(
+            `SELECT
+                pd.id_pedido_detalle,
+                pd.id_pedido,
+                pd.id_producto,
+                p.descripcion,
+                pd.cantidad,
+                pd.precio_unitario
+            FROM pedido_detalle pd
+            INNER JOIN productos p ON p.id_producto = pd.id_producto
+            WHERE id_pedido = 1;`, [id]
+        );
+
+        // Solo devolvés directamente el array
+        return pedido;
+    } catch (error) {
+        console.error('Error en la consulta', error);
+        throw error;
+    }
+};
+
+const getPedidosPorUsuario = async (id_usuario) => {
+    try {
+        const [pedidos] = await db.query(
+            `SELECT 
+                p.id_pedido,
+                p.total,
+                p.metodo_pago,
+                p.estado,
+                CONVERT_TZ(p.fecha, '+00:00', '-03:00') AS fecha
+            FROM pedidos p
+            WHERE p.id_usuario = ?
+            ORDER BY p.fecha DESC`,
+            [id_usuario]
+        );
+        return pedidos;
+    } catch (error) {
+        console.error('Error al obtener pedidos del usuario:', error);
+        throw error;
+    }
+};
+
+const getPedidoDetallePorUsuario = async (id_usuario) => {
+    try {
+        const [pedidos] = await db.query(
+            `SELECT
+                pd.id_pedido,
+                pd.id_producto,
+                pr.descripcion,
+                pd.cantidad,
+                pd.precio_unitario,
+                pr.marca,
+                pr.vehiculo,
+                pr.img
+            FROM pedido_detalle pd
+            INNER JOIN pedidos p ON p.id_pedido = pd.id_pedido
+            INNER JOIN productos pr ON pr.id_producto = pd.id_producto
+            WHERE p.id_usuario = ?`,
+            [id_usuario]
+        );
+        return pedidos;
+    } catch (error) {
+        console.error('Error al obtener pedidos del usuario:', error);
+        throw error;
+    }
+};
+
+const finalizarPedido = async (datos) => {
+    try {
+        const { id_usuario, total, productos, metodo_pago } = datos;
+
+        if (!id_usuario || !total || !Array.isArray(productos) || productos.length === 0) {
+            throw { status: 400, message: 'Faltan datos del usuario o productos' };
+        }
+
+        // 1. Insertar en la tabla pedidos
+        const [pedidoResult] = await db.query(
+            'INSERT INTO pedidos (id_usuario, total, metodo_pago) VALUES (?, ?, ?)',
+            [id_usuario, total, metodo_pago]
+        );
+
+        const id_pedido = pedidoResult.insertId;
+        console.log('Pedido insertado con ID:', id_pedido);
+
+        // 2. Insertar productos en pedido_detalle
+        const insertDetalleQuery = `
+            INSERT INTO pedido_detalle (id_pedido, id_producto, cantidad, precio_unitario)
+            VALUES (?, ?, ?, ?)`;
+
+        for (const producto of productos) {
+            const { id_producto, quantity, precio } = producto;
+
+            if (!id_producto || !quantity || !precio) {
+                console.warn('Producto incompleto, se omite:', producto);
+                continue;
+            }
+
+            await db.query(insertDetalleQuery, [id_pedido, id_producto, quantity, precio]);
+        }
+
+        return { message: 'Pedido y detalles registrados correctamente', id_pedido };
+    } catch (error) {
+        console.error('Error al registrar pedido:', error);
+        throw {
+            status: error.status || 500,
+            message: error.message || 'Error al registrar el pedido',
+        };
+    }
+};
+
+
+module.exports = {
+    getPedidos,
+    getPedido,
+    getPedidosPorUsuario,
+    getPedidoDetallePorUsuario,
+    finalizarPedido
+};

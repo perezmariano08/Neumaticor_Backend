@@ -2,7 +2,7 @@ const db = require('../utils/db');
 
 const getProductos = async () => {
     const [productos] = await db.query(
-        `SELECT * FROM productos;`
+        `SELECT * FROM productos p LEFT JOIN marcas m ON m.id_marca = p.id_marca`
     )    
     return productos
 };
@@ -26,9 +26,16 @@ const getProductosDestacados = async () => {
     return productos
 };
 
+const getMarcas = async () => {
+    const [productos] = await db.query(
+        `SELECT * FROM marcas`
+    )    
+    return productos
+};
 
 module.exports = {
     getProductos,
     getProductosDestacados,
     getProducto,
+    getMarcas
 };

@@ -47,7 +47,8 @@ const getProductosConPrecio = async (req, res) => {
             const producto = await productosService.getProducto(req.params.id);
             const precios = await preciosService.getPreciosPorLista(idLista);
             const precio = precios.find(pr => pr.id_producto === producto.id_producto);
-
+            
+            
             return res.json({
                 ...producto,
                 precio: precio ? precio.precio : null
@@ -73,10 +74,18 @@ const getProductosConPrecio = async (req, res) => {
     }
 };
 
-
+const getMarcas = async (req, res) => {    
+    try {
+        const marcas = await productosService.getMarcas();
+        return res.status(200).json(marcas);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al obtener las marcas', error });
+    }
+};
 
 module.exports = {
     getProductos,
     getProductosDestacados,
-    getProductosConPrecio
+    getProductosConPrecio,
+    getMarcas
 };

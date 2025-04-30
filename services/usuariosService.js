@@ -3,9 +3,17 @@ const db = require('../utils/db');
 const getUsuarios = async () => {
     const [usuarios] = await db.query(
         `SELECT 
-            *
+            *,
+            u.id_usuario,
+            u.nombre,
+            u.apellido,
+            u.id_rol,
+            r.rol,
+            lp.nombre as nombre_lista
         FROM 
-            usuarios u`
+            usuarios u
+        LEFT JOIN roles r ON r.id_rol = u.id_rol
+        LEFT JOIN listas_precios lp ON lp.id_lista_precio = u.id_lista_precio;`
     )    
     return usuarios
 };
@@ -22,8 +30,30 @@ const getUsuario = async (id) => {
     }
 };
 
+const getRoles = async () => {
+    const [roles] = await db.query(
+        `SELECT 
+            *
+        FROM 
+            roles`
+    )    
+    return roles
+};
+
+const getSolicitudes = async () => {
+    const [solicitudes] = await db.query(
+        `SELECT 
+            *
+        FROM 
+            solicitudes_clientes`
+    )    
+    return solicitudes
+};
+
 module.exports = {
     getUsuarios,
-    getUsuario
+    getUsuario,
+    getRoles,
+    getSolicitudes
 
 };

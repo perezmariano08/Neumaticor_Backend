@@ -20,30 +20,54 @@ const loginController = async (req, res) => {
 };
 
 const registerController = async (req, res) => {
-    const { email, password, nombre } = req.body;
-    console.log('Cuerpo de la solicitud:', req.body);  // Esto debería mostrar el cuerpo de la solicitud
+    const datosUsuario = req.body;
+    console.log('Cuerpo de la solicitud:', datosUsuario);
 
     try {
-        // Llamamos al servicio para registrar el usuario
-        const user = await authService.registerUser(email, password, nombre);
-        
-        // Verifica que `user` contenga la propiedad `message` y `userId`
+        const user = await authService.registerUser(datosUsuario);
+        console.log('Resultado de registerUser:', user);
+
         if (!user || !user.message || !user.userId) {
             return res.status(500).json({ message: 'Error al procesar la respuesta del servicio' });
         }
 
-        // Si el registro es exitoso, devolvemos el mensaje de éxito
         res.status(200).json({
             message: user.message,
             success: true,
-            user: { id_usuario: user.userId, email, nombre }, // Información básica del usuario
+            user: { id_usuario: user.userId, ...datosUsuario }, // devolvés lo que envió el frontend
         });
+
     } catch (error) {
-        // Si hay un error, lo manejamos aquí
-        console.error(error);  // Esto te ayudará a depurar el error en la consola
+        console.error('Error en el controller:', error);
+        res.status(error.status || 500).json({ message: error.message || 'Error desconocido' });
+    }
+};
+
+const registrarSolicitud = async (req, res) => {
+    const datosUsuario = req.body;
+    console.log('Cuerpo de la solicitud:', datosUsuario);
+
+    try {
+        const user = await authService.registrarSolicitud(datosUsuario);
+        console.log('Resultado de registerUser:', user);
+
+        if (!user || !user.message) {
+            return res.status(500).json({ message: 'Error al procesar la respuesta del servicio' });
+        }
+
+        res.status(200).json({
+            message: user.message,
+            success: true,
+            user: { ...datosUsuario }, // devolvés lo que envió el frontend
+        });
+
+    } catch (error) {
+        console.error('Error en el controller:', error);
         res.status(error.status || 500).json({ message: error.message || 'Error desconocido' });
     }
 };
 
 
-module.exports = { loginController, registerController };
+
+
+module.exports = { loginController, registerController, registrarSolicitud };

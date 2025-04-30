@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const usuariosRoutes = require('./routes/usuariosRoutes');
 const preciosRoutes = require('./routes/preciosRoutes');
+const pedidosRoutes = require('./routes/pedidosRoutes');
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/precios', preciosRoutes);
+app.use('/api/pedidos', pedidosRoutes);
 
 const server = app.listen(port, '0.0.0.0', () => {
     console.log(`Corriendo en http://localhost:${port}`);
