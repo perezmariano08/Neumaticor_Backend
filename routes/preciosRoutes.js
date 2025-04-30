@@ -6,7 +6,7 @@ const { revisarAdmin, verificarToken } = require('../middlewares/auth');
 
 // Esta es la ruta correcta según tu código
 router.get('/productos/:id?', productosController.getProductosConPrecio);
-router.get('/listas', revisarAdmin, preciosController.getListasPrecios);
-router.post('/aplicar-porcentaje', revisarAdmin, preciosController.aplicarPorcentaje);
+router.get('/listas', preciosController.getListasPrecios);
+router.post('/aplicar-porcentaje', preciosController.aplicarPorcentaje);
 
 module.exports = router;
