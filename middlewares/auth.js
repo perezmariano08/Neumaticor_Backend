@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'secreto-super-seguro';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function revisarAdmin(req, res, next) {
     if (req.user && req.user.isAdmin) {

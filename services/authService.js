@@ -26,7 +26,7 @@ const loginUser = async (email, password) => {
             rol: user.id_rol,
             isAdmin: user.id_rol === 1,
          },
-         process.env.JWT_SECRET || 'mi_secreto_super_seguro', // mejor usar variables de entorno
+         process.env.JWT_SECRET, // mejor usar variables de entorno
          { expiresIn: '1d' } // el token dura 1 día
       );
 
