@@ -69,12 +69,13 @@ const getPedidoDetallePorUsuario = async (id_usuario) => {
                 pr.descripcion,
                 pd.cantidad,
                 pd.precio_unitario,
-                pr.marca,
+                m.marca,
                 pr.vehiculo,
                 pr.img
             FROM pedido_detalle pd
             INNER JOIN pedidos p ON p.id_pedido = pd.id_pedido
             INNER JOIN productos pr ON pr.id_producto = pd.id_producto
+            INNER JOIN marcas m ON m.id_marca = pr.id_marca
             WHERE p.id_usuario = ?`,
             [id_usuario]
         );
