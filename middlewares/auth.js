@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET;
 
 function revisarAdmin(req, res, next) {
+    console.log('req.user:', req.user); // 👈 Esto te va a decir si hay usuario
+
+    console.log(req.user.isAdmin);
+    
     if (req.user && req.user.isAdmin) {
         next();
     } else {
@@ -10,31 +13,19 @@ function revisarAdmin(req, res, next) {
 }
 
 function verificarToken(req, res, next) {
-    const token = req.headers.authorization?.split(' ')[1]; // "Bearer <token>"
-    if (!token) {
-        return res.status(401).json({ mensaje: 'Token no proporcionado' });
-    }
-
+    const token = req.headers["authorization"];
+    if (!token) return res.status(401).json({ message: "Token requerido" });    
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
+        const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
+        req.user = decoded; // Guardamos la info del usuario en el request
         next();
-    } catch (error) {
-        res.status(401).json({ mensaje: 'Token inválido' });
+    } catch (err) {
+        res.status(401).json({ message: "Token inválido" });
     }
 }
-
-const fakeUser = (req, res, next) => {
-    req.user = {
-        id_cliente: 5,
-        id_lista_precio: 3
-    };
-    next();
-};
 
 
 module.exports = {
     revisarAdmin,
-    verificarToken,
-    fakeUser
+    verificarToken
 };

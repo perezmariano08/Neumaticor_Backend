@@ -24,7 +24,9 @@ app.use(cors({
     origin: [
         'http://localhost:5173', 
         'http://localhost:5174',
-        'https://neumaticor.vercel.app'
+        'https://neumaticor.vercel.app',
+        'https://neumaticor.com',
+        'https://www.neumaticor.com',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],

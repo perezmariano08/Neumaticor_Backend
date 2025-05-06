@@ -9,7 +9,9 @@ const getPedidos = async () => {
             p.total,
             p.metodo_pago,
             p.estado,
-            p.fecha
+            p.fecha,
+            p.codigo_postal,
+            p.direccion
         FROM pedidos p
         INNER JOIN usuarios u ON u.id_usuario = p.id_usuario;`
     )    
@@ -88,7 +90,7 @@ const getPedidoDetallePorUsuario = async (id_usuario) => {
 
 const finalizarPedido = async (datos) => {
     try {
-        const { id_usuario, total, productos, metodo_pago } = datos;
+        const { id_usuario, total, productos, metodo_pago, codigo_postal, direccion } = datos;
 
         if (!id_usuario || !total || !Array.isArray(productos) || productos.length === 0) {
             throw { status: 400, message: 'Faltan datos del usuario o productos' };
@@ -96,8 +98,8 @@ const finalizarPedido = async (datos) => {
 
         // 1. Insertar en la tabla pedidos
         const [pedidoResult] = await db.query(
-            'INSERT INTO pedidos (id_usuario, total, metodo_pago) VALUES (?, ?, ?)',
-            [id_usuario, total, metodo_pago]
+            'INSERT INTO pedidos (id_usuario, total, metodo_pago, codigo_postal, direccion) VALUES (?, ?, ?, ?, ?)',
+            [id_usuario, total, metodo_pago, codigo_postal, direccion]
         );
 
         const id_pedido = pedidoResult.insertId;
@@ -129,11 +131,37 @@ const finalizarPedido = async (datos) => {
     }
 };
 
+const actualizarPedido = async (id_pedido, estado) => {
+    try {
+        if (!id_pedido || !estado) {
+            throw { status: 400, message: 'Faltan datos para actualizar el pedido' };
+        }
+
+        const [result] = await db.query(
+            'UPDATE pedidos SET estado = ? WHERE id_pedido = ?',
+            [estado, id_pedido]
+        );
+        
+        if (result.affectedRows === 0) {
+            throw { status: 404, message: 'Pedido no encontrado' };
+        }
+
+        return { message: 'Pedido actualizado correctamente' };
+    } catch (error) {
+        console.error('Error al actualizar pedido:', error);
+        throw {
+            status: error.status || 500,
+            message: error.message || 'Error al actualizar el pedido',
+        };
+    }
+};
+
 
 module.exports = {
     getPedidos,
     getPedido,
     getPedidosPorUsuario,
     getPedidoDetallePorUsuario,
-    finalizarPedido
+    finalizarPedido,
+    actualizarPedido
 };

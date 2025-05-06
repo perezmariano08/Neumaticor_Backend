@@ -42,7 +42,8 @@ const loginUser = async (email, password) => {
          isAdmin: user.id_rol === 1,
          estado: user.estado,
          lista_precio: user.id_lista_precio,
-         apellido: user.apellido
+         apellido: user.apellido,
+         nombre_visible: user.nombre_visible
       };
    } catch (error) {
       return { success: false, message: 'Hubo un error con el servidor' };

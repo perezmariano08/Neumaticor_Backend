@@ -57,14 +57,17 @@ const getProductosConPrecio = async (req, res) => {
             // Si se piden todos
             const productos = await productosService.getProductos();
             const precios = await preciosService.getPreciosPorLista(idLista);
-
-            const productosConPrecio = productos.map(p => {
+            
+            const productosConPrecio = 
+            productos
+            .filter((p) => p.estado === "A")
+            .map(p => {
                 const precio = precios.find(pr => pr.id_producto === p.id_producto);
                 return {
                     ...p,
                     precio: precio ? precio.precio : null
                 };
-            });
+            });            
 
             return res.json(productosConPrecio);
         }

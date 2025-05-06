@@ -5,7 +5,6 @@ const getPreciosPorLista = async (idListaPrecio) => {
     return precios[0];
 };
 
-
 const getListasPrecios = async () => {
     const [listas_precios] = await db.query(
         `SELECT * FROM listas_precios;`
