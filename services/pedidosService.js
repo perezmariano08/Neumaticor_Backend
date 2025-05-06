@@ -30,7 +30,7 @@ const getPedido = async (id) => {
                 pd.precio_unitario
             FROM pedido_detalle pd
             INNER JOIN productos p ON p.id_producto = pd.id_producto
-            WHERE id_pedido = 1;`, [id]
+            WHERE id_pedido = ?;`, [id]
         );
 
         // Solo devolvés directamente el array
@@ -110,16 +110,19 @@ const finalizarPedido = async (datos) => {
             INSERT INTO pedido_detalle (id_pedido, id_producto, cantidad, precio_unitario)
             VALUES (?, ?, ?, ?)`;
 
-        for (const producto of productos) {
-            const { id_producto, quantity, precio } = producto;
-
-            if (!id_producto || !quantity || !precio) {
-                console.warn('Producto incompleto, se omite:', producto);
-                continue;
+            for (const producto of productos) {
+                const { id_producto, quantity, precio, precio_oferta, oferta } = producto;
+            
+                if (!id_producto || !quantity || !(precio || precio_oferta)) {
+                    console.warn('Producto incompleto, se omite:', producto);
+                    continue;
+                }
+            
+                const precioFinal = oferta === 'S' ? precio_oferta : precio;
+            
+                await db.query(insertDetalleQuery, [id_pedido, id_producto, quantity, precioFinal]);
             }
-
-            await db.query(insertDetalleQuery, [id_pedido, id_producto, quantity, precio]);
-        }
+            
 
         return { message: 'Pedido y detalles registrados correctamente', id_pedido };
     } catch (error) {
