@@ -3,11 +3,14 @@ const db = require('../utils/db');
 const getUsuarios = async () => {
     const [usuarios] = await db.query(
         `SELECT 
-            *,
             u.id_usuario,
+            u.email,
             u.nombre,
+            u.nombre_visible,
             u.apellido,
             u.id_rol,
+            u.estado,
+            u.fecha_creacion,
             r.rol,
             lp.nombre as nombre_lista
         FROM 

@@ -10,6 +10,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const usuariosRoutes = require('./routes/usuariosRoutes');
 const preciosRoutes = require('./routes/preciosRoutes');
 const pedidosRoutes = require('./routes/pedidosRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 dotenv.config();
 
@@ -28,10 +29,11 @@ app.use(cors({
         'https://neumaticor.com.ar',
         'https://www.neumaticor.com.ar',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cross-Origin-Opener-Policy', 'same-origin'],
     credentials: true
 }));
+
 
 app.use('/api', productosRoutes);
 app.use('/api/auth', authRoutes);
@@ -39,6 +41,23 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/precios', preciosRoutes);
 app.use('/api/pedidos', pedidosRoutes);
+app.use('/api/upload', uploadRoutes);
+
+
+const session = require('express-session');
+const passport = require('passport');
+require('./config/passport');
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false } // usá true si usás HTTPS
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 const server = app.listen(port, '0.0.0.0', () => {
     console.log(`Corriendo en http://localhost:${port}`);

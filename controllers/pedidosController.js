@@ -35,6 +35,18 @@ const getPedidosPorUsuario = async (req, res) => {
     }
 };
 
+const getPedidoDetalleController = async (req, res) => {
+    const {id_pedido} = req.params // desde el token decodificado
+
+    try {
+        const pedido = await pedidosService.getPedidoDetalle(id_pedido);
+        return res.status(200).json(pedido);
+    } catch (error) {
+        console.error('Error al obtener pedidos del usuario:', error);
+        return res.status(500).json({ message: 'Error al obtener los pedidos' });
+    }
+};
+
 const getPedidosDetallePorUsuario = async (req, res) => {
     const {id_usuario} = req.params // desde el token decodificado
 
@@ -97,6 +109,7 @@ module.exports = {
     getPedidos,
     getPedidosPorUsuario,
     getPedidosDetallePorUsuario,
+    getPedidoDetalleController,
     finalizarPedido,
     actualizarPedido
 };

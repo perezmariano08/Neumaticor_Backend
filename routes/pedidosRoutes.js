@@ -8,6 +8,7 @@ router.post('/finalizar-pedido', pedidosController.finalizarPedido);
 // PUT
 router.put('/actualizar-pedido', verificarToken, revisarAdmin, pedidosController.actualizarPedido);
 // GET
+router.get('/detalle/:id_pedido', pedidosController.getPedidoDetalleController);
 router.get('/usuarios/:id_usuario', pedidosController.getPedidosPorUsuario);
 router.get('/usuarios/detalle/:id_usuario', pedidosController.getPedidosDetallePorUsuario);
 router.get('/:id?', pedidosController.getPedidos);

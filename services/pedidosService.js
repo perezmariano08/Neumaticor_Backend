@@ -9,11 +9,12 @@ const getPedidos = async () => {
             p.total,
             p.metodo_pago,
             p.estado,
-            p.fecha,
+            CONVERT_TZ(p.fecha, '+00:00', '-03:00') AS fecha,
             p.codigo_postal,
             p.direccion
         FROM pedidos p
-        INNER JOIN usuarios u ON u.id_usuario = p.id_usuario;`
+        INNER JOIN usuarios u ON u.id_usuario = p.id_usuario
+        ORDER BY p.fecha DESC`
     )    
     return pedidos
 };
@@ -22,19 +23,22 @@ const getPedido = async (id) => {
     try {
         const [pedido] = await db.query(
             `SELECT
-                pd.id_pedido_detalle,
-                pd.id_pedido,
-                pd.id_producto,
-                p.descripcion,
-                pd.cantidad,
-                pd.precio_unitario
-            FROM pedido_detalle pd
-            INNER JOIN productos p ON p.id_producto = pd.id_producto
-            WHERE id_pedido = ?;`, [id]
+                p.id_pedido,
+                p.id_usuario,
+                CONCAT(u.nombre, ' ',u.apellido) as usuario,
+                CONVERT_TZ(p.fecha, '+00:00', '-03:00') AS fecha,
+                p.fecha_vencimiento,
+                p.estado,
+                p.total,
+                p.metodo_pago,
+                p.direccion,
+                p.codigo_postal
+            FROM pedidos p
+            INNER JOIN usuarios u ON u.id_usuario = p.id_usuario
+            WHERE id_pedido = ?`, [id]
         );
-
         // Solo devolvés directamente el array
-        return pedido;
+        return pedido.length > 0 ? pedido[0] : null;
     } catch (error) {
         console.error('Error en la consulta', error);
         throw error;
@@ -56,6 +60,28 @@ const getPedidosPorUsuario = async (id_usuario) => {
             [id_usuario]
         );
         return pedidos;
+    } catch (error) {
+        console.error('Error al obtener pedidos del usuario:', error);
+        throw error;
+    }
+};
+
+const getPedidoDetalle = async (id_pedido_detalle) => {
+    try {
+        const [pedido] = await db.query(
+            `SELECT
+                pd.id_pedido_detalle,
+                pd.id_pedido,
+                pd.id_producto,
+                p.descripcion,
+                pd.cantidad,
+                pd.precio_unitario
+            FROM pedido_detalle pd
+            INNER JOIN productos p ON p.id_producto = pd.id_producto
+            WHERE pd.id_pedido = ?;`,
+            [id_pedido_detalle]
+        );
+        return pedido
     } catch (error) {
         console.error('Error al obtener pedidos del usuario:', error);
         throw error;
@@ -96,10 +122,16 @@ const finalizarPedido = async (datos) => {
             throw { status: 400, message: 'Faltan datos del usuario o productos' };
         }
 
+        // 🗓️ Calcular fecha de vencimiento (7 días después)
+        const now = new Date();
+        now.setDate(now.getDate() + 7);
+        const fecha_vencimiento = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
         // 1. Insertar en la tabla pedidos
         const [pedidoResult] = await db.query(
-            'INSERT INTO pedidos (id_usuario, total, metodo_pago, codigo_postal, direccion) VALUES (?, ?, ?, ?, ?)',
-            [id_usuario, total, metodo_pago, codigo_postal, direccion]
+            `INSERT INTO pedidos (id_usuario, total, metodo_pago, codigo_postal, direccion, fecha_vencimiento) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [id_usuario, total, metodo_pago, codigo_postal, direccion, fecha_vencimiento]
         );
 
         const id_pedido = pedidoResult.insertId;
@@ -110,19 +142,18 @@ const finalizarPedido = async (datos) => {
             INSERT INTO pedido_detalle (id_pedido, id_producto, cantidad, precio_unitario)
             VALUES (?, ?, ?, ?)`;
 
-            for (const producto of productos) {
-                const { id_producto, quantity, precio, precio_oferta, oferta } = producto;
-            
-                if (!id_producto || !quantity || !(precio || precio_oferta)) {
-                    console.warn('Producto incompleto, se omite:', producto);
-                    continue;
-                }
-            
-                const precioFinal = oferta === 'S' ? precio_oferta : precio;
-            
-                await db.query(insertDetalleQuery, [id_pedido, id_producto, quantity, precioFinal]);
+        for (const producto of productos) {
+            const { id_producto, quantity, precio, precio_oferta, oferta } = producto;
+
+            if (!id_producto || !quantity || !(precio || precio_oferta)) {
+                console.warn('Producto incompleto, se omite:', producto);
+                continue;
             }
-            
+
+            const precioFinal = oferta === 'S' ? precio_oferta : precio;
+
+            await db.query(insertDetalleQuery, [id_pedido, id_producto, quantity, precioFinal]);
+        }
 
         return { message: 'Pedido y detalles registrados correctamente', id_pedido };
     } catch (error) {
@@ -164,7 +195,8 @@ module.exports = {
     getPedidos,
     getPedido,
     getPedidosPorUsuario,
+    getPedidoDetalle,
     getPedidoDetallePorUsuario,
     finalizarPedido,
-    actualizarPedido
+    actualizarPedido,
 };

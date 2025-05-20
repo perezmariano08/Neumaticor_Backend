@@ -2,8 +2,6 @@ const mysql = require('mysql2/promise');  // Asegúrate de estar usando mysql2/p
 const dotenv = require('dotenv');
 dotenv.config();
 
-
-
 const pool = mysql.createPool({
     connectionLimit: 20,
     host: process.env.DB_HOST,

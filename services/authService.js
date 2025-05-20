@@ -7,7 +7,7 @@ const loginUser = async (email, password) => {
       const [results] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
 
       if (results.length === 0) {
-         return { success: false, message: 'Credenciales incorrectas' };
+         return { success: false, message: 'El usuario o la contraseña no son correctas. Por favor, inténtalo de nuevo.' };
       }
 
       const user = results[0];
@@ -15,7 +15,7 @@ const loginUser = async (email, password) => {
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
-         return { success: false, message: 'Credenciales incorrectas' };
+         return { success: false, message: 'El usuario o la contraseña no son correctas. Por favor, inténtalo de nuevo.' };
       }
 
       // ✅ Generar el token
@@ -52,10 +52,14 @@ const loginUser = async (email, password) => {
 
 const registerUser = async (datos) => {
    try {
-      const { email, password, ...restoDatos } = datos;
+      const { email, password, metodo, ...restoDatos } = datos;
 
-      if (!email || !password) {
-         throw { status: 400, message: 'Email y contraseña son obligatorios' };
+      if (!email) {
+         throw { status: 400, message: 'Email es obligatorio' };
+      }
+
+      if (!password && metodo !== "google") {
+         throw { status: 400, message: 'Contraseña obligatoria para método tradicional' };
       }
 
       // Verificar si ya existe el email
@@ -64,12 +68,18 @@ const registerUser = async (datos) => {
          throw { status: 400, message: 'El correo ya está registrado' };
       }
 
-      // Encriptar la contraseña
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const campos = ['email', ...Object.keys(restoDatos)];
+      const valores = [email, ...Object.values(restoDatos)];
 
-      // Preparar datos para el INSERT
-      const campos = ['email', 'password', ...Object.keys(restoDatos)];
-      const valores = [email, hashedPassword, ...Object.values(restoDatos)];
+      if (metodo !== "google") {
+         // Solo encripta y guarda la contraseña si no es login por Google
+         const hashedPassword = await bcrypt.hash(password, 10);
+         campos.splice(1, 0, 'password');     // Insertar en segunda posición
+         valores.splice(1, 0, hashedPassword);
+      } else {
+         campos.splice(1, 0, 'password');
+         valores.splice(1, 0, null); // guardar null o "" si querés
+      }
 
       const placeholders = campos.map(() => '?').join(', ');
       const query = `INSERT INTO usuarios (${campos.join(', ')}) VALUES (${placeholders})`;
@@ -87,6 +97,33 @@ const registerUser = async (datos) => {
       };
    }
 };
+
+
+const findOrCreateGoogleUser = async (profile) => {
+      const email = profile.emails[0].value;
+      const name = profile.displayName;
+      console.log(email, name);
+      
+      const [user] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+      console.log(user);
+      
+      if (user.length === 0) {
+         // Si no existe, crear el usuario sin contraseña
+         const datosUsuario = {
+            email,
+            nombre: name,
+            metodo: 'google', // Puedes agregar el método de autenticación
+            password: "google", // No se necesita contraseña en este caso
+         };
+
+         console.log(datosUsuario);
+         
+   
+         const newUser = await registerUser(datosUsuario); // Usa registerUser para registrar el usuario
+         return newUser; // Retorna el usuario recién creado
+      }
+   return user;
+}
 
 const registrarSolicitud = async (datos) => {
    try {
@@ -130,4 +167,4 @@ const registrarSolicitud = async (datos) => {
 
 
 
-module.exports = { loginUser, registerUser, registrarSolicitud };
+module.exports = { loginUser, registerUser, findOrCreateGoogleUser, registrarSolicitud };

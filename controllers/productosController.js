@@ -86,9 +86,46 @@ const getMarcas = async (req, res) => {
     }
 };
 
+const crearProductoController = async (req, res) => {
+    const datos = req.body;
+    console.log('Cuerpo de la solicitud:', datos);
+
+    try {
+        const response = await productosService.crearProducto(datos);
+        console.log('Resultado del producto:', response);
+
+        if (!response || !response.message) {
+            return res.status(500).json({ message: 'Error al procesar la respuesta del servicio' });
+        }
+
+        res.status(200).json({
+            message: response.message,
+            success: true,
+            producto: { ...datos, id_producto: response.id_producto }, // devolvés también el id generado
+        });
+
+    } catch (error) {
+        console.error('Error en el controller:', error);
+        res.status(error.status || 500).json({ message: error.message || 'Error desconocido' });
+    }
+};
+
+const actualizarProductoController = async (req, res) => {
+    const datos = req.body;
+
+    try {
+        const resultado = await productosService.actualizarProducto(datos);
+        res.status(200).json(resultado);
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || 'Error al actualizar el producto' });
+    }
+};
+
 module.exports = {
     getProductos,
     getProductosDestacados,
     getProductosConPrecio,
-    getMarcas
+    getMarcas,
+    crearProductoController,
+    actualizarProductoController
 };
