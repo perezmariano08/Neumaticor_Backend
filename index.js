@@ -11,6 +11,7 @@ const usuariosRoutes = require('./routes/usuariosRoutes');
 const preciosRoutes = require('./routes/preciosRoutes');
 const pedidosRoutes = require('./routes/pedidosRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const pagosRoutes = require('./routes/pagosRoutes');
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/precios', preciosRoutes);
 app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/pagos', pagosRoutes);
 
 
 const session = require('express-session');

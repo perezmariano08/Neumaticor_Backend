@@ -8,6 +8,7 @@ const getUsuarios = async () => {
             u.nombre,
             u.nombre_visible,
             u.apellido,
+            CONCAT(u.nombre, ' ', u.apellido) AS usuario,
             u.id_rol,
             u.estado,
             u.fecha_creacion,
