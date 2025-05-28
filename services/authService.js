@@ -27,7 +27,7 @@ const loginUser = async (email, password) => {
             isAdmin: user.id_rol === 1,
          },
          process.env.JWT_SECRET, // mejor usar variables de entorno
-         { expiresIn: '1d' } // el token dura 1 día
+         { expiresIn: '30d' } // el token dura 30 día
       );
 
       // ✅ Retornar token junto con los datos del usuario

@@ -8,6 +8,8 @@ const passport = require('passport');
 router.post('/login', authController.loginController);
 router.post('/register', verificarToken, revisarAdmin, authController.registerController);
 router.post('/registrar-solicitud', authController.registrarSolicitud);
+router.get('/refresh', authController.refreshToken);
+router.post('/logout', authController.logoutUser);
 
 // LOGIN CON GOOGLE (REDIRECCIÓN TRADICIONAL)
 // router.get(

@@ -184,8 +184,69 @@ const registrarSolicitud = async (req, res) => {
     }
 };
 
+// controllers/authController.js
+const refreshToken = async (req, res) => {
+    try {
+        const token = req.cookies.refreshToken;
+        if (!token) return res.status(401).json({ message: 'No autorizado' });
+
+        const [result] = await db.query('SELECT * FROM usuarios WHERE refresh_token = ?', [token]);
+        if (result.length === 0) return res.status(403).json({ message: 'Token inválido' });
+
+        const user = result[0];
+
+        jwt.verify(token, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+            if (err || decoded.email !== user.email) {
+                return res.status(403).json({ message: 'Token inválido o expirado' });
+            }
+
+            const payload = {
+                id_usuario: user.id_usuario,
+                email: user.email,
+                rol: user.id_rol,
+                isAdmin: user.id_rol === 1
+            };
+
+            const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+            return res.json({ token: newAccessToken });
+        });
+    } catch (error) {
+        console.error('Error en /refresh:', error);
+        return res.status(500).json({ message: 'Error del servidor' });
+    }
+};
+
+// controllers/authController.js
+const logoutUser = async (req, res) => {
+    try {
+        const token = req.cookies.refreshToken;
+        if (!token) return res.sendStatus(204); // No hay sesión
+
+        const [result] = await db.query('SELECT * FROM usuarios WHERE refresh_token = ?', [token]);
+        if (result.length === 0) {
+            res.clearCookie('refreshToken');
+            return res.sendStatus(204);
+        }
+
+        // Borrar token en BD
+        await db.query('UPDATE usuarios SET refresh_token = NULL WHERE id_usuario = ?', [result[0].id_usuario]);
+
+        // Borrar cookie
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'Strict' });
+        return res.sendStatus(200);
+    } catch (error) {
+        console.error('Error en /logout:', error);
+        return res.status(500).json({ message: 'Error del servidor' });
+    }
+};
+
+
+
 module.exports = { 
     loginController, 
+    refreshToken,
+    logoutUser,
     registerController, 
     registrarSolicitud,
     googleLogin,
